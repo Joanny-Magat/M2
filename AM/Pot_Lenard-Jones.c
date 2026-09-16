@@ -11,6 +11,8 @@ N = argv[1] (entier)
 T = argv[2] (entier)
 Nb_lignes = argv[3] (entier)
 
+gcc Pot_Lenard-Jones.c -o Pot_Lenard-Jones.out
+.\Pot_Lenard-Jones.out 5 1000 10
 */
 
 #include <stdio.h>
