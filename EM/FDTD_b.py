@@ -39,6 +39,7 @@ unp=np.linspace(0,0,N)
 fig, ax = plt.subplots(figsize=(10, 6)) #largeur, hauteur
 line, = ax.plot([], [], "blue") #label="Paquet d'onde"
 
+"""
 #Centrage de la fenetre de la figure
 manager = plt.get_current_fig_manager()
 window = manager.window
@@ -48,6 +49,7 @@ screen = window.screen().availableGeometry()
 window.move(
     (screen.width() - window.width()) // 2,
     (screen.height() - window.height()) // 2)
+"""
 
 ax.set_xlim(xmin, xmax)
 ax.set_ylim(-1.2, 1.2)

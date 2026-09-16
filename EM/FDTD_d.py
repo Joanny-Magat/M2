@@ -57,8 +57,6 @@ for i in range(N): #Ici la boucle ne sert à rien mais c'est pour les questions 
         esp_r[i]=n2**2
 
 
-
-
 fig, ax = plt.subplots(figsize=(14, 6)) #largeur, hauteur
 line, = ax.plot([], [], "black") #label="Paquet d'onde"
 
@@ -68,6 +66,7 @@ fig.subplots_adjust(
     top=0.90,
     bottom=0.10) #Met le graphe à gauche pour avoir la place de mettre les légendes à droite
 
+"""
 #Centrage de la fenetre de la figure
 manager = plt.get_current_fig_manager()
 window = manager.window
@@ -77,7 +76,7 @@ screen = window.screen().availableGeometry()
 window.move(
     (screen.width() - window.width()) // 2,
     (screen.height() - window.height()) // 2)
-
+"""
 
 
 ax.set_xlim(xmin, xmax)
