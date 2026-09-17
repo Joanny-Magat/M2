@@ -1,7 +1,12 @@
 /*
-Compare le temps d'exécution entre N multiplications et N divisions en faisant l'expérience M fois
+Compare le temps d'exécution entre N multiplications et N divisions
+en faisant l'expérience M fois
+
 N = argv[1]
 M = argv[2]
+
+gcc -O0 time_compa.c -o compa.out
+./compa.out 1000000 10
 */
 
 #include <stdio.h>

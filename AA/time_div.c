@@ -1,3 +1,13 @@
+/*
+gcc -O0 time_div.c -o div0.out
+gcc -O1 time_div.c -o div1.out
+gcc -O2 time_div.c -o div2.out
+gcc -O3 time_div.c -o div3.out
+gcc -ffast-math time_div.c -o divmath.out
+
+for O in 0 1 2 3; do gcc -O$O time_div.c -o div$O.out; done && gcc -ffast-math time_div.c -o divmath.out
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

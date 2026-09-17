@@ -1,3 +1,13 @@
+/*
+gcc -O0 time_mul.c -o mul0.out
+gcc -O1 time_mul.c -o mul1.out
+gcc -O2 time_mul.c -o mul2.out
+gcc -O3 time_mul.c -o mul3.out
+gcc -ffast-math time_mul.c -o mulmath.out
+
+for O in 0 1 2 3; do gcc -O$O time_mul.c -o mul$O.out; done && gcc -ffast-math time_mul.c -o mulmath.out
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

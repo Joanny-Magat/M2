@@ -4,7 +4,8 @@
 """
 
 Script permettant de visualiser la simulation créée en C.
-Prend en argument le chemin du csv quui a été créé par la simulation.
+Prend en 1er argument le chemin du csv quui a été créé par la simulation.
+Prend en 2eme argument le nombre d'interval de l'animation
 Affiche une animation de l'évolution de toutes les particules.
 
 /bin/python3 /skole/nas-edu/home0/mpn2/magat-j/Documents/M2/AM/Pot_Lenard-Jones.py /skole/nas-edu/home0/mpn2/magat-j/Documents/M2/AM/Pot_LJ_N=5_T=1000_date=14h_05min_24s_17_09_2026.csv
@@ -16,11 +17,12 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import sys
 
-if len(sys.argv) < 2:
-    print("Erreur : Mettre en argument le nom du csv")
+if len(sys.argv) < 3:
+    print("Erreur : Mettre en argument le nom du csv et le nombre d'interval de l'animation")
     sys.exit(1)
 
 FICHIER_CSV = sys.argv[1]
+nb_interval = sys.argv[2]
 
 # ============================================================
 # Lecture du CSV
@@ -169,7 +171,7 @@ animation = FuncAnimation(
     update,
     frames=len(tours),
     init_func=init,
-    interval=1,
+    interval=nb_interval,
     blit=True,
     repeat=True
 )
