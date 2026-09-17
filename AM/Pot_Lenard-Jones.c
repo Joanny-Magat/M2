@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     double epsilon = 1.0;
     double sigma = 1.0;
     double m = 1.0;
-    double dt = 1.0;
+    double dt = 0.001;
 
 
 
@@ -89,9 +89,16 @@ int main(int argc, char *argv[]) {
     
     Particule *l_particules = malloc(N*sizeof(Particule));
 
-    char titre_csv[1000];
+
+    int taille_csv = N * 10000 + 100000;
+
+    char *titre_csv = malloc(taille_csv);
     sprintf(titre_csv, "//CSV contenant les positions et les vitesses de N=%d particules évoluant dans un espace infini durant T=%d tours.\n//Chaque particule est décrite à chaque tour par sa position x et y et sa vitesse vx et vy (ex pour la particule 0 : x0,y0,vx0,vy0).\n\nTour", N, T);
-    char ligne0_csv[1000] = "0";
+    
+    char *ligne0_csv = malloc(taille_csv);
+    sprintf(ligne0_csv, "0");
+
+
 
     for (int i = 0; i < N; i++) {
         
@@ -126,14 +133,6 @@ int main(int argc, char *argv[]) {
         // Renvoie A(t+dt) en connaissant A(t), sa dérivé a(t) et le pas dt 
         // Ex pour avoir vx(t+dt) , A=vx(t), a=ax(t), dt=1 car dt est l'unité d'un tour
         return a + A*dt;
-    }
-
-
-    // Fonction norme //
-
-    double norme(double xi, double yi, double xj, double yj) {
-        // Calcul r, la norme de r_ij
-        return sqrt(pow(xj-xi,2)+pow(yj-yi,2));
     }
 
 
