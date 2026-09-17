@@ -22,7 +22,7 @@ if len(sys.argv) < 3:
     sys.exit(1)
 
 FICHIER_CSV = sys.argv[1]
-nb_interval = sys.argv[2]
+nb_interval = int(sys.argv[2])
 
 # ============================================================
 # Lecture du CSV
@@ -89,25 +89,14 @@ for i in range(nb_particules):
         toutes_les_x.append(x)
         toutes_les_y.append(y)
 
-marge_x = (max(toutes_les_x) - min(toutes_les_x)) * 0.05
-marge_y = (max(toutes_les_y) - min(toutes_les_y)) * 0.05
 
-ax.set_xlim(
-    min(toutes_les_x) - marge_x,
-    max(toutes_les_x) + marge_x
-)
-
-ax.set_ylim(
-    min(toutes_les_y) - marge_y,
-    max(toutes_les_y) + marge_y
-)
+ax.set_xlim(-100, 100)
+ax.set_ylim(-100, 100)
 
 # ============================================================
 # Création des particules
 # ============================================================
 
-# Une couleur différente pour chaque particule
-couleurs = plt.cm.tab10(range(nb_particules))
 
 points = []
 
@@ -117,7 +106,7 @@ for i in range(nb_particules):
         [],
         "o",
         markersize=8,
-        color=couleurs[i],
+        color="red",
         label=f"Particule {i}"
     )
 

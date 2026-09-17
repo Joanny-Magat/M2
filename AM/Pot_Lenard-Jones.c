@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     Particule *l_particules = malloc(N*sizeof(Particule));
 
 
-    int taille_csv = N * 10000 + 100000;
+    int taille_csv = N * sizeof(double) * 10000 + 100000;
 
     char *titre_csv = malloc(taille_csv);
     sprintf(titre_csv, "//CSV contenant les positions et les vitesses de N=%d particules évoluant dans un espace infini durant T=%d tours.\n//Chaque particule est décrite à chaque tour par sa position x et y et sa vitesse vx et vy (ex pour la particule 0 : x0,y0,vx0,vy0).\n\nTour", N, T);
@@ -102,13 +102,13 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < N; i++) {
         
-        char titre_particule[100];
-        char ligne0_particule[100];
+        char titre_particule[1000];
+        char ligne0_particule[1000];
 
         l_particules[i].x = (double)(-100 + rand() % 201); // Nombre aléatoire entre -100 et 100
         l_particules[i].y = (double)(-100 + rand() % 201); // Nombre aléatoire entre -100 et 100
-        l_particules[i].vx = (double)(-10 + rand() % 21); // Nombre aléatoire entre -10 et 10
-        l_particules[i].vy = (double)(-10 + rand() % 21); // Nombre aléatoire entre -10 et 10
+        l_particules[i].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -10 et 10
+        l_particules[i].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -10 et 10
 
         sprintf(titre_particule, ",x%d,y%d,vx%d,vy%d", i, i, i, i);
         sprintf(ligne0_particule, ",%.2f,%.2f,%.2f,%.2f", l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy);
@@ -143,10 +143,12 @@ int main(int argc, char *argv[]) {
 
         // AMELIORATION : Prendre en compte le cas où les particules sont très proches
 
+        double r_carre = (xj-xi)*(xj-xi)+(yj-yi)*(yj-yi);
+
         return 
-            ( (24*epsilon) / ((xj-xi)*(xj-xi)+(yj-yi)*(yj-yi)) )
-            * ( 2*pow((sigma*sigma)/((xj-xi)*(xj-xi)+(yj-yi)*(yj-yi)),6)
-            - pow((sigma*sigma)/((xj-xi)*(xj-xi)+(yj-yi)*(yj-yi)),3) );
+            ( (24*epsilon) / r_carre )
+            * ( 2*pow((sigma*sigma)/r_carre,6)
+            - pow((sigma*sigma)/r_carre,3) );
     }
 
 
