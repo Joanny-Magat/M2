@@ -11,8 +11,12 @@ N = argv[1] (entier)
 T = argv[2] (entier)
 Nb_lignes = argv[3] (entier)
 
-gcc Pot_Lenard-Jones.c -o Pot_Lenard-Jones.out
-.\Pot_Lenard-Jones.out 5 1000 10
+gcc -O0 Pot_Lenard-Jones.c -o Pot_Lenard-Jones.out -lm
+(-lm est important pour faire fonctionner pow)
+
+Windows : .\Pot_Lenard-Jones.out 5 1000 10
+Linux : ./Pot_Lenard-Jones.out 5 1000 10
+
 */
 
 #include <stdio.h>
@@ -135,16 +139,15 @@ int main(int argc, char *argv[]) {
 
     // Fonction force //
 
-    double force(double epsilon, double sigma, double r) {
-        // Calcul la norme de la force F_ij
-
-        if ( r == 0 ) { // Au cas où si deux particules sont exactement au même endroit
-            return 0.0;
-        }
+    double force(double epsilon, double sigma, double xi, double yi, double xj, double yj) {
+        // Calcul de la norme de la force F_ij
 
         // AMELIORATION : Prendre en compte le cas où les particules sont très proches
 
-        return ( (24*epsilon) / pow(r,2) ) * ( 2*pow(sigma/r,12) - pow(sigma/r,6) );
+        return 
+            ( (24*epsilon) / ((xj-xi)*(xj-xi)+(yj-yi)*(yj-yi)) )
+            * ( 2*pow((sigma*sigma)/((xj-xi)*(xj-xi)+(yj-yi)*(yj-yi)),6)
+            - pow((sigma*sigma)/((xj-xi)*(xj-xi)+(yj-yi)*(yj-yi)),3) );
     }
 
 
@@ -204,9 +207,8 @@ int main(int argc, char *argv[]) {
                 double yi = l_particules[i].y;
                 double xj = l_particules[j].x;
                 double yj = l_particules[j].y;
-                double r = norme(xi,yi,xj,yj);
-                F_ij[i][j].x = force(epsilon,sigma,r) * ( xj - xi );
-                F_ij[i][j].y = force(epsilon,sigma,r) * ( yj - yi );
+                F_ij[i][j].x = force(epsilon,sigma,xi,yi,xj,yj) * ( xj - xi );
+                F_ij[i][j].y = force(epsilon,sigma,xi,yi,xj,yj) * ( yj - yi );
                 axi = axi + F_ij[i][j].x;
                 ayi = ayi + F_ij[i][j].y;
 
