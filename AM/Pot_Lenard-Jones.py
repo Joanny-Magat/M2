@@ -7,6 +7,8 @@ Script permettant de visualiser la simulation créée en C.
 Prend en argument le chemin du csv quui a été créé par la simulation.
 Affiche une animation de l'évolution de toutes les particules.
 
+/bin/python3 /skole/nas-edu/home0/mpn2/magat-j/Documents/M2/AM/Pot_Lenard-Jones.py /skole/nas-edu/home0/mpn2/magat-j/Documents/M2/AM/Pot_LJ_N=5_T=1000_date=14h_05min_24s_17_09_2026.csv
+
 """
 
 import csv
@@ -36,7 +38,6 @@ with open(FICHIER_CSV, "r", newline="", encoding="utf-8-sig") as fichier:
     lecteur = csv.DictReader(
     ligne for ligne in fichier
     if ligne.strip() and not ligne.strip().startswith("//"))
-    print(lecteur.fieldnames)
 
     # Récupération automatique du nombre de particules
     noms_colonnes = lecteur.fieldnames
