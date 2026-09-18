@@ -28,6 +28,8 @@ Linux : ./Pot_Lenard-Jones.out 5 1000 10
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 int main(int argc, char *argv[]) {
 
@@ -58,11 +60,19 @@ int main(int argc, char *argv[]) {
     double epsilon = 1.0;
     double sigma = 1.0;
     double m = 1.0;
-    double dt = 0.001;
+    double dt = 0.01;
 
 
 
-    // Création du csv //
+    // Création du dossier data s'il n'existe pas //
+
+    struct stat st;
+
+    if (stat("./data", &st) != 0 || !S_ISDIR(st.st_mode))
+    {
+        mkdir("./data", 0755);
+    }
+
 
     time_t now = time(NULL);
     struct tm *date = localtime(&now);
@@ -70,7 +80,7 @@ int main(int argc, char *argv[]) {
     strftime(buffer, sizeof(buffer), "%Hh_%Mmin_%Ss_%d_%m_%Y", date);
 
     char nom_csv[100];
-    snprintf(nom_csv, sizeof(nom_csv), "Pot_LJ_N=%d_T=%d_date=%s.csv", N, T, buffer);
+    snprintf(nom_csv, sizeof(nom_csv), "Pot_LJ_N=%d_T=%d_NbLignes=%d_date=%s.csv", N, T, nombre_lignes_csv, buffer);
 
     FILE *fichier = fopen(nom_csv, "w");
 
@@ -92,51 +102,35 @@ int main(int argc, char *argv[]) {
     
     Particule *l_particules = malloc(N*sizeof(Particule));
 
+    FILE *fichier0 = fopen("data/tour_0.csv", "w");
 
-    int taille_csv = N * sizeof(double) * 10000 + 100000;
+    if (fichier0 == NULL) {
+        printf("Erreur : Impossible de créer le fichier.\n");
+        return 1;
+    }
 
-    char *titre_csv = malloc(taille_csv);
-    sprintf(titre_csv, "//CSV contenant les positions et les vitesses de N=%d particules évoluant dans un espace infini durant T=%d tours.\n//Chaque particule est décrite à chaque tour par sa position x et y et sa vitesse vx et vy (ex pour la particule 0 : x0,y0,vx0,vy0).\n\nTour", N, T);
-    
-    char *ligne0_csv = malloc(taille_csv);
-    sprintf(ligne0_csv, "0");
+    fprintf(fichier0, "particule,x,y,vx,vy\n");
 
+    for(int i = 0; i<N; i++){
+        
+    }
 
 
     for (int i = 0; i < N; i++) {
-        
-        char titre_particule[1000];
-        char ligne0_particule[1000];
 
         l_particules[i].x = (double)(-100 + rand() % 201); // Nombre aléatoire entre -100 et 100
         l_particules[i].y = (double)(-100 + rand() % 201); // Nombre aléatoire entre -100 et 100
-        l_particules[i].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -10 et 10
-        l_particules[i].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -10 et 10
+        l_particules[i].vx = (double)(-1 + rand() % 2); // Nombre aléatoire entre -1 et 1
+        l_particules[i].vy = (double)(-1 + rand() % 2); // Nombre aléatoire entre -1 et 1
 
-        sprintf(titre_particule, ",x%d,y%d,vx%d,vy%d", i, i, i, i);
-        sprintf(ligne0_particule, ",%.2f,%.2f,%.2f,%.2f", l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy);
-
-        strcat(titre_csv, titre_particule);
-        strcat(ligne0_csv, ligne0_particule);
+        fprintf(fichier0, "%d,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy);
     }
 
-    strcat(titre_csv, "\n");
-    strcat(ligne0_csv, "\n");
-    
-    fprintf(fichier, titre_csv);
-    fprintf(fichier, ligne0_csv);
+    fclose(fichier0);
 
 
 
-
-
-    // Algorithme d'Euler //
-
-    double euler(double A, double a, double dt) {
-        // Renvoie A(t+dt) en connaissant A(t), sa dérivé a(t) et le pas dt 
-        // Ex pour avoir vx(t+dt) , A=vx(t), a=ax(t), dt=1 car dt est l'unité d'un tour
-        return a + A*dt;
-    }
+   
 
 
     // Fonction force //
@@ -153,8 +147,6 @@ int main(int argc, char *argv[]) {
             * ( 2*pow((sigma*sigma)/r_carre,6)
             - pow((sigma*sigma)/r_carre,3) );
     }
-
-
 
 
     
@@ -177,40 +169,35 @@ int main(int argc, char *argv[]) {
     // les symétriques étant des opposées
 
 
-    char ligne_csv[1000000];
+    // Calcul des numéros de tour où on save dans le csv //
+
     int numero_ligne_actuelle_csv = 1;
     int prochain_tour_csv = (int) ( ((long long)numero_ligne_actuelle_csv * T) / nombre_lignes_csv );
     //Numéro du prochain tour où il faudra enregistrer les données dans le csv
 
 
 
-
     for (int t = 1; t < T; t++) { // à chaque tour
-
-
-        if (t == prochain_tour_csv) { // Si on doit écrire les données durant ce tour
-            
-            ligne_csv[0] = '\0'; // Nouvelle ligne dans le csv
-            sprintf(ligne_csv,"%d",t);
-            numero_ligne_actuelle_csv++;
-
-        }
     
         for (int i = 0; i < N; i++) { // pour chaque particule i 
             
             double axi = 0.0; // composante x de l'accélération de la particule i
             double ayi = 0.0; // composante y de l'accélération de la particule i
 
+            double xi = l_particules[i].x;
+            double yi = l_particules[i].y;
+            double vxi = l_particules[i].vx;
+            double vyi = l_particules[i].vy;
+
             for (int j = 0; j < N; j++) { // pour chaque couple i-j
 
                 if ( i == j ) {
                     continue;
                 }
-
-                double xi = l_particules[i].x;
-                double yi = l_particules[i].y;
+ 
                 double xj = l_particules[j].x;
                 double yj = l_particules[j].y;
+
                 F_ij[i][j].x = force(epsilon,sigma,xi,yi,xj,yj) * ( xj - xi );
                 F_ij[i][j].y = force(epsilon,sigma,xi,yi,xj,yj) * ( yj - yi );
                 axi = axi + F_ij[i][j].x;
@@ -220,26 +207,35 @@ int main(int argc, char *argv[]) {
 
             axi = axi/m;
             ayi = ayi/m;
-            l_particules[i].vx = euler(l_particules[i].vx,axi,dt);
-            l_particules[i].vy = euler(l_particules[i].vy,ayi,dt);
-            l_particules[i].x = euler(l_particules[i].x,l_particules[i].vx,dt);
-            l_particules[i].y = euler(l_particules[i].y,l_particules[i].vy,dt);
-
-            if (t == prochain_tour_csv) { // On ajoute les données de cette particule dans le csv si c'est un tour où on doit écrire
-                
-                char ligne_particule_csv[100];
-                sprintf(ligne_particule_csv, ",%.2f,%.2f,%.2f,%.2f", l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy);
-                strcat(ligne_csv, ligne_particule_csv);
-
-            }
-
+            // On applique Euler
+            l_particules[i].x = vxi + xi*dt;
+            l_particules[i].y = vyi + yi*dt;
+            l_particules[i].vx = axi + vxi*dt;
+            l_particules[i].vy = ayi + vyi*dt;
+            
         }
 
-        if (t == prochain_tour_csv) { // Quand on doit écrire ce tour ci, fini de compléter la nouvelle ligne du csv puis l'écrit dans le csv
+        if (t == prochain_tour_csv) { // Si on doit écrire les données durant ce tour
+            
+            char nom_csv[100];
+            snprintf(nom_csv, sizeof(nom_csv), "data/tour_%d.csv", t);
 
-            strcat(ligne_csv, "\n");
-            fprintf(fichier, ligne_csv);
+            FILE *fichier = fopen(nom_csv, "w");
 
+            if (fichier == NULL) {
+                printf("Erreur : Impossible de créer le fichier.\n");
+                return 1;
+            }
+
+            fprintf(fichier, "particule,x,y,vx,vy\n");
+
+            for(int i = 0; i<N; i++){
+                fprintf(fichier, "%d,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy);
+            }
+
+            fclose(fichier);
+
+            numero_ligne_actuelle_csv++;
             if ( numero_ligne_actuelle_csv < nombre_lignes_csv ) { // Calcule le prochain tour où il faudra écrire (sauf si ça dépasse le nombre max de tour)
                 prochain_tour_csv = (int) ( ((long long)numero_ligne_actuelle_csv * T) / nombre_lignes_csv );
             }
@@ -248,7 +244,8 @@ int main(int argc, char *argv[]) {
     }
 
     free(F_ij);
+    free(F_i);
     free(l_particules);
-    fclose(fichier);
+    
     return 0;
 }

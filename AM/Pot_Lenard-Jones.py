@@ -6,115 +6,62 @@
 joanny.magat@etu.umontpellier.fr
 
 Script permettant de visualiser la simulation créée en C.
-Prend en 1er argument le chemin du csv quui a été créé par la simulation.
-Prend en 2eme argument le nombre d'interval de l'animation
+Prend en argument le nombre d'interval de l'animation
 Affiche une animation de l'évolution de toutes les particules.
 
 /bin/python3 /skole/nas-edu/home0/mpn2/magat-j/Documents/M2/AM/Pot_Lenard-Jones.py /skole/nas-edu/home0/mpn2/magat-j/Documents/M2/AM/Pot_LJ_N=5_T=1000_date=14h_05min_24s_17_09_2026.csv
 
 """
 
+import numpy as np
 import csv
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import sys
+from pathlib import Path
+import re
 
-if len(sys.argv) < 3:
+if len(sys.argv) < 2:
     print("Erreur : Mettre en argument le nom du csv et le nombre d'interval de l'animation")
     sys.exit(1)
 
-FICHIER_CSV = sys.argv[1]
-nb_interval = int(sys.argv[2])
+nb_interval = int(sys.argv[1])
 
-# ============================================================
-# Lecture du CSV
-# ============================================================
+dossier = "data"
+num_tour = []
 
-tours = []
+for f in Path(dossier).iterdir() :
+    if f.is_file() :
+        num_tour.append(int(re.search(r'tour_(\d+)\.csv$', str(f)).group(1)))
 
-# positions[i] = [(x, y), (x, y), ...] pour la particule i
-positions = []
+num_tour.sort()
+num_tour = np.array(num_tour)
 
-# vitesses[i] = [(vx, vy), (vx, vy), ...] pour la particule i
-vitesses = []
 
-with open(FICHIER_CSV, "r", newline="", encoding="utf-8-sig") as fichier:
-    lecteur = csv.DictReader(
-    ligne for ligne in fichier
-    if ligne.strip() and not ligne.strip().startswith("//"))
+# --- charge tous les fichiers : positions x et y de chaque tours ---
+x = []
+y = []
+for t in num_tour:
+    data = np.loadtxt(f"{dossier}/tour_{t}.csv", delimiter=",", skiprows=1)
+    # chaque csv a une ligne par particule, colonnes : i,x,y,vx,vy
+    x.append(data[:, 1])   # colonne x
+    y.append(data[:, 2])   # colonne y
+x = np.array(x)
+y = np.array(y)
 
-    # Récupération automatique du nombre de particules
-    noms_colonnes = lecteur.fieldnames
 
-    nb_particules = sum(
-        1 for colonne in noms_colonnes
-        if colonne.startswith("x")
-    )
+fig, ax = plt.subplots()
 
-    positions = [[] for _ in range(nb_particules)]
-    vitesses = [[] for _ in range(nb_particules)]
+ax.set_aspect("equal")
+ax.set_xlabel("x")
+ax.set_ylabel("y")
 
-    for ligne in lecteur:
-        tours.append(int(ligne["Tour"]))
-
-        for i in range(nb_particules):
-            x = float(ligne[f"x{i}"])
-            y = float(ligne[f"y{i}"])
-            vx = float(ligne[f"vx{i}"])
-            vy = float(ligne[f"vy{i}"])
-
-            positions[i].append((x, y))
-            vitesses[i].append((vx, vy))
-
-# ============================================================
-# Création de la figure
-# ============================================================
-
-fig, ax = plt.subplots(figsize=(9, 7))
-
-ax.set_title("Animation des particules")
-ax.set_xlabel("Position X")
-ax.set_ylabel("Position Y")
-
-ax.grid(True, alpha=0.3)
-ax.set_aspect("equal", adjustable="box")
-
-# ============================================================
-# Détermination des limites de l'animation
-# ============================================================
-
-toutes_les_x = []
-toutes_les_y = []
-
-for i in range(nb_particules):
-    for x, y in positions[i]:
-        toutes_les_x.append(x)
-        toutes_les_y.append(y)
-
+# --- limites des axes : on prend les min/max sur toute la simu ---
+#ax.set_xlim(x.min() - 0.1, x.max() + 0.1)
+#ax.set_ylim(y.min() - 0.1, y.max() + 0.1)
 
 ax.set_xlim(-100, 100)
 ax.set_ylim(-100, 100)
-
-# ============================================================
-# Création des particules
-# ============================================================
-
-
-points = []
-
-for i in range(nb_particules):
-    point, = ax.plot(
-        [],
-        [],
-        "o",
-        markersize=8,
-        color="red",
-        label=f"Particule {i}"
-    )
-
-    points.append(point)
-
-#ax.legend()
 
 # Texte indiquant le tour actuel
 texte_tour = ax.text(
@@ -125,47 +72,21 @@ texte_tour = ax.text(
     fontsize=12
 )
 
-# ============================================================
-# Fonction d'initialisation
-# ============================================================
+# objet "points" qu'on va déplacer à chaque image
+points, = ax.plot([], [], "o", markersize=10)
 
 def init():
-    for point in points:
-        point.set_data([], [])
-
+    points.set_data([], [])
     texte_tour.set_text("")
+    return points,texte_tour
 
-    return points + [texte_tour]
+def update(t):
+    points.set_data(x[t], y[t])
+    texte_tour.set_text(f"tour {num_tour[t]}")
+    return points, texte_tour
 
-
-# ============================================================
-# Fonction appelée à chaque image
-# ============================================================
-
-def update(frame):
-    for i in range(nb_particules):
-        x, y = positions[i][frame]
-
-        points[i].set_data([x], [y])
-
-    texte_tour.set_text(f"Tour : {tours[frame]}")
-
-    return points + [texte_tour]
-
-
-# ============================================================
-# Création de l'animation
-# ============================================================
-
-animation = FuncAnimation(
-    fig,
-    update,
-    frames=len(tours),
-    init_func=init,
-    interval=nb_interval,
-    blit=True,
-    repeat=True
-)
+ani = FuncAnimation(fig, update, frames=len(num_tour),
+                    init_func=init, interval=nb_interval, blit=True, repeat=True)
 
 plt.show()
 
