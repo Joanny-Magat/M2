@@ -1,5 +1,8 @@
 /*
 
+@author: magat-j
+joanny.magat@etu.umontpellier.fr
+
 Crée N particules initialement alignées verticalement et ayant des vitesses de même norme et de directions aléatoires.
 Ces particules évoluent dans un espace infini (à terme il faudra faire une boite carré sans bord ie si on atteint le haut, renvoie en bas).
 On utilise les coordonnées cartésiennes en 2D.

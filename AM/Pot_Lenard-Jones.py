@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
+@author: magat-j
+joanny.magat@etu.umontpellier.fr
 
 Script permettant de visualiser la simulation créée en C.
 Prend en 1er argument le chemin du csv quui a été créé par la simulation.
