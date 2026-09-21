@@ -4,7 +4,7 @@
 joanny.magat@etu.umontpellier.fr
 
 Crée N particules initialement alignées verticalement et ayant des vitesses de même norme et de directions aléatoires.
-Ces particules évoluent dans un espace infini (cd Pot_Lenard-Jones_perio.c pour une boîte périodique).
+Ces particules évoluent dans une boîte périodique.
 On utilise les coordonnées cartésiennes en 2D.
 La simulation dure T tours.
 Ensuite, simule à chaque instant leurs évolutions grâce au potentiel de lenard-Jones.
@@ -16,7 +16,7 @@ T = argv[2] (entier)
 Nb_lignes = argv[3] (entier)
 
 Compilation :
-gcc -O0 Pot_Lenard-Jones.c -o Pot_Lenard-Jones.out -lm
+gcc -O0 Pot_Lenard-Jones_perio.c -o Pot_Lenard-Jones_perio.out -lm
 (-lm est important pour faire fonctionner pow)
 
 Windows : .\Pot_Lenard-Jones_perio.out 100 10000 1000
@@ -60,6 +60,8 @@ int main(int argc, char *argv[]) {
     int nombre_lignes_csv = atoi(argv[3]);
 
     double dt = 0.01;
+    double L = 2*sqrt(N); // Longueur de la boite
+    double d_min = 1; // Distance minimum initiale entre deux particules
 
     /* Constantes normalisées => on ne les def meme pas vu que tout vaut 1
     double epsilon = 1.0;
@@ -122,32 +124,54 @@ int main(int argc, char *argv[]) {
 
     fprintf(fichier, "###### Tour 0 ######\n");
 
-    for (int i = 0; i < N; i++) {
 
-        l_particules[i].x = (double)(-100 + rand() % 201); // Nombre aléatoire entre -100 et 100
-        l_particules[i].y = (double)(-100 + rand() % 201); // Nombre aléatoire entre -100 et 100
-        l_particules[i].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
-        l_particules[i].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
-        l_particules[i].ax = 0; // Nombre aléatoire entre -1 et 1
-        l_particules[i].ay = 0; 
+    // Création de la particule 0 :
+    l_particules[0].x = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -100 et 100
+    l_particules[0].y = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -100 et 100
+    l_particules[0].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
+    l_particules[0].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
+    l_particules[0].ax = 0; // Nombre aléatoire entre -1 et 1
+    l_particules[0].ay = 0; 
+    
+    for (int i = 1; i < N; i++) {
+
+        int i_trop_proche = 0;
+
+        do {
+
+            l_particules[i].x = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -100 et 100
+            l_particules[i].y = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -100 et 100
+            l_particules[i].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
+            l_particules[i].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
+            l_particules[i].ax = 0; // Nombre aléatoire entre -1 et 1
+            l_particules[i].ay = 0; 
+
+            double xi = l_particules[i].x;
+            double yi = l_particules[i].y;
+
+            for (int j = 0; j < i; j++) {
+                
+                double xj = l_particules[j].x;
+                double yj = l_particules[j].y;
+                double dx = xj - xi;
+                double dy = yj - yi;
+
+                // Périodicité :
+                if {
+                    dx = ;
+                    dy = ;
+                }
+
+                double r_carre = dx*dx+dy*dy;
+
+
+            }
+
+        } while i_trop_proche;
+
+        
 
         fprintf(fichier, "%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy, l_particules[i].ax, l_particules[i].ay);
-    }
-
-
-    // Fonction force //
-
-    double force(double xi, double yi, double xj, double yj) {
-        // Calcul de la norme de la force F_ij
-
-        // AMELIORATION : Prendre en compte le cas où les particules sont très proches
-
-        double r_carre = (xj-xi)*(xj-xi)+(yj-yi)*(yj-yi);
-
-        return 
-            ( 24 / r_carre )
-            * ( 2*pow(1/r_carre,6)
-            - pow(1/r_carre,3) );
     }
 
 
@@ -200,9 +224,20 @@ int main(int argc, char *argv[]) {
  
                 double xj = l_particules[j].x;
                 double yj = l_particules[j].y;
+                double dx = xj - xi;
+                double dy = yj - yi;
+                double r_carre = dx*dx+dy*dy;
 
-                F_ij[i][j].x = force(xi,yi,xj,yj) * ( xj - xi );
-                F_ij[i][j].y = force(xi,yi,xj,yj) * ( yj - yi );
+                F_ij[i][j].x = 
+                ( 24 / r_carre )
+                * ( 2*pow(1/r_carre,6)
+                - pow(1/r_carre,3) ) * dx;
+                
+                F_ij[i][j].y = 
+                ( 24 / r_carre )
+                * ( 2*pow(1/r_carre,6)
+                - pow(1/r_carre,3) ) * dy;
+
                 axi1 = axi1 + F_ij[i][j].x;
                 ayi1 = ayi1 + F_ij[i][j].y;
 

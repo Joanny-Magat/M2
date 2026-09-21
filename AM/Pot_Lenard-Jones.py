@@ -5,13 +5,19 @@
 @author: magat-j
 joanny.magat@etu.umontpellier.fr
 
-Script permettant de visualiser la simulation créée en C.
-Prend en argument le nombre d'interval de l'animation
+Script permettant de visualiser la simulation Pot_Lenard-Jones.c
 Affiche une animation de l'évolution de toutes les particules.
 
-/bin/python3 /skole/nas-edu/home0/mpn2/magat-j/Documents/M2/AM/Pot_Lenard-Jones.py /skole/nas-edu/home0/mpn2/magat-j/Documents/M2/AM/Pot_LJ_N=5_T=1000_date=14h_05min_24s_17_09_2026.csv
+Arguments (optionnels) :
+1er argu : Nombre d'intervalle de l'animation
+2eme argu : Chemin complet du csv simulé
 
+Fac :
+/bin/python3 /skole/nas-edu/home0/mpn2/magat-j/Documents/M2/AM/Pot_Lenard-Jones.py
 """
+
+
+# --- bibliothèques ---
 
 import numpy as np
 import csv
@@ -20,48 +26,150 @@ from matplotlib.animation import FuncAnimation
 import sys
 from pathlib import Path
 import re
-
-if len(sys.argv) < 2:
-    print("Erreur : Mettre en argument le nom du csv et le nombre d'interval de l'animation")
-    sys.exit(1)
-
-nb_interval = int(sys.argv[1])
-
-dossier = "data"
-num_tour = []
-
-for f in Path(dossier).iterdir() :
-    if f.is_file() :
-        num_tour.append(int(re.search(r'tour_(\d+)\.csv$', str(f)).group(1)))
-
-num_tour.sort()
-num_tour = np.array(num_tour)
+import os
+from datetime import datetime
 
 
-# --- charge tous les fichiers : positions x et y de chaque tours ---
-x = []
-y = []
-for t in num_tour:
-    data = np.loadtxt(f"{dossier}/tour_{t}.csv", delimiter=",", skiprows=1)
-    # chaque csv a une ligne par particule, colonnes : i,x,y,vx,vy
-    x.append(data[:, 1])   # colonne x
-    y.append(data[:, 2])   # colonne y
+# --- Constantes ---
+
+assert 1 <= len(sys.argv) <= 3, "\n\nErreur : Il faut entre 0 et 2 arguments :"\
+"\n\n- 0 : par défaut le nombre d'intervalle de l'animation est 10 et le csv simulé est le plus récent du dossier data."\
+"\n\n- 1 : Nombre d'intervalle de l'animation et le csv simulé est le plus récent du dossier data."\
+"\n\n- 2 : Nombre d'intervalle de l'animation et chemin complet du csv simulé.\n "
+
+if len(sys.argv) < 3: # 0 ou 1 argument 
+
+    if len(sys.argv) == 2: # 1 argument
+        nb_interval = int(sys.argv[1])
+    
+    else : # 0 argument
+        nb_interval = 10
+    
+    dossier = "data"
+
+    fichier_recent = None
+    date_recente = None
+
+    for fichier in os.listdir(dossier):
+
+        # Vérifie que c'est un CSV du bon format
+        match = re.match(
+            r"^PotLJ_date=(\d+)h_(\d+)min_(\d+)s_(\d+)_(\d+)_(\d+)_N=(\d+)_T=(\d+)_NbLignes=(\d+)\.csv$",
+            fichier
+        )
+
+        if match:
+            heure = int(match.group(1))
+            minute = int(match.group(2))
+            seconde = int(match.group(3))
+            jour = int(match.group(4))
+            mois = int(match.group(5))
+            annee = int(match.group(6))
+
+            date = datetime(annee, mois, jour, heure, minute, seconde)
+
+            jour = match.group(4) #Remet les 0 si on est par ex le 09/09/2026
+            mois = match.group(5) #Permet de faire jolie sur le titre du plot
+
+            if date_recente is None or date > date_recente:
+                date_recente = date
+                fichier_recent = fichier
+
+    nom_csv = f"{dossier}/{fichier_recent}"
+    
+else : # 2 arguments
+
+    nb_interval = int(sys.argv[1])
+    nom_csv = f"{sys.argv[2]}"    
+
+
+print(f"CSV simulé : {nom_csv}")
+
+match = re.search(r"PotLJ_date=(.*?)_N=(\d+)_T=(\d+)_NbLignes=(\d+)\.csv$", nom_csv)
+
+date = match.group(1)
+N = int(match.group(2))
+T = int(match.group(3))
+NbLignes = int(match.group(4))
+
+
+
+
+# --- Récupération des positions ---
+
+
+num_tour = [] #Liste de tous les numéros de tour save dans le csv
+
+x = [[] for t in range(NbLignes)] # liste de liste où x[t][i] est la position x de la particule i au tour t
+y = [[] for t in range(NbLignes)] # liste de liste où y[t][i] est la position y de la particule i au tour t
+
+with open(f"{nom_csv}", "r") as fichier:
+    
+    for ligne in fichier: # chaque ligne a pour colonnes : particule_i,x,y,vx,vy,ax,ay
+        
+        ligne = ligne.strip()
+
+        if not re.match(r"^//", ligne):
+            
+            if re.match(r"^#", ligne) :
+                match = re.search(r"^###### Tour (\d+) ######$", ligne)
+                num_tour.append(int(match.group(1)))
+            
+            else :
+                match = re.match(r"^(\d+),(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),", ligne)
+                if match:
+                    i = int(match.group(1)) #inutile en soit
+                    x[len(num_tour)-1].append(float(match.group(2)))
+                    y[len(num_tour)-1].append(float(match.group(3)))
+                    
 x = np.array(x)
 y = np.array(y)
 
 
-fig, ax = plt.subplots()
+# --- Tracer du plot ---
+
+fig, ax = plt.subplots(figsize=(8, 8))
+
+if len(sys.argv) < 3: # 0 ou 1 argument 
+    ax.set_title(
+        f"Potentiel de Lenard-Jones (boîte non périodique)\nAnimation de la simulation réalisée à {heure}h{minute} le {jour}/{mois}/{annee}",
+        fontweight="normal",
+        pad=10)
+
+else : # Chemin du csv mis manuellement
+    ax.set_title(
+        f"Potentiel de Lenard-Jones (boîte non périodique)\nAnimation de la simulation du csv :\n{nom_csv}",
+        fontweight="normal",
+        pad=10)
 
 ax.set_aspect("equal")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 
-# --- limites des axes : on prend les min/max sur toute la simu ---
+
+# --- limites des axes ---
+
+xmin = np.percentile(x, 10)
+xmax = np.percentile(x, 90)
+
+ymin = np.percentile(y, 10)
+ymax = np.percentile(y, 90)
+
+marge_x = max(abs(xmin), abs(xmax))
+marge_y = max(abs(ymin), abs(ymax))
+marge = max(marge_x,marge_y)
+
+ax.set_xlim(-marge, marge)
+ax.set_ylim(-marge, marge)
+
+
+# On prend les min/max sur toute la simu 
 #ax.set_xlim(x.min() - 0.1, x.max() + 0.1)
 #ax.set_ylim(y.min() - 0.1, y.max() + 0.1)
 
-ax.set_xlim(-100, 100)
-ax.set_ylim(-100, 100)
+#ax.set_xlim(-100, 100)
+#ax.set_ylim(-100, 100)
+
 
 # Texte indiquant le tour actuel
 texte_tour = ax.text(
