@@ -205,7 +205,6 @@ int main(int argc, char *argv[]) {
                 F_ij[i][j].y = force(xi,yi,xj,yj) * ( yj - yi );
                 axi1 = axi1 + F_ij[i][j].x;
                 ayi1 = ayi1 + F_ij[i][j].y;
-
             }
 
             /* m normalisé

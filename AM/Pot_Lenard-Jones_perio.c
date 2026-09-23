@@ -32,6 +32,7 @@ Linux : ./Pot_Lenard-Jones_perio.out 100 10000 1000
 #include <math.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <assert.h>
 
 int main(int argc, char *argv[]) {
 
@@ -47,10 +48,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (argc < 4 || !est_entier(argv[1]) || !est_entier(argv[2]) || !est_entier(argv[3]) ) {
-        printf("Erreur : Arguments absents ou non entiers !\n");
-        return 1;
-    }
+    assert(
+        argc <= 4 &&
+        (argc < 2 || est_entier(argv[1])) &&
+        (argc < 3 || est_entier(argv[2])) &&
+        (argc < 4 || est_entier(argv[3]))
+    );
 
 
     // Constantes //
@@ -60,8 +63,8 @@ int main(int argc, char *argv[]) {
     int nombre_lignes_csv = atoi(argv[3]);
 
     double dt = 0.01;
-    double L = 2*sqrt(N); // Longueur de la boite
-    double d_min = 1; // Distance minimum initiale entre deux particules
+    int L = (int) (2*sqrt(N)); // Longueur de la boite
+    double d_min_carre = 1; // Carré de la distance minimum initiale entre deux particules
 
     /* Constantes normalisées => on ne les def meme pas vu que tout vaut 1
     double epsilon = 1.0;
@@ -88,7 +91,7 @@ int main(int argc, char *argv[]) {
     strftime(buffer, sizeof(buffer), "%Hh_%Mmin_%Ss_%d_%m_%Y", date);
 
     char nom_csv[100];
-    snprintf(nom_csv, sizeof(nom_csv), "data/PotLJ_date=%s_N=%d_T=%d_NbLignes=%d.csv", buffer, N, T, nombre_lignes_csv);
+    snprintf(nom_csv, sizeof(nom_csv), "data/PotLJ_perio_date=%s_N=%d_T=%d_NbLignes=%d.csv", buffer, N, T, nombre_lignes_csv);
 
     FILE *fichier = fopen(nom_csv, "w");
 
@@ -118,6 +121,8 @@ int main(int argc, char *argv[]) {
         double vy;
         double ax;
         double ay;
+        double ax1; // ax en t+1
+        double ay1; // ay en t+1
     } Particule;
     
     Particule *l_particules = malloc(N*sizeof(Particule));
@@ -126,25 +131,32 @@ int main(int argc, char *argv[]) {
 
 
     // Création de la particule 0 :
-    l_particules[0].x = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -100 et 100
-    l_particules[0].y = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -100 et 100
+    l_particules[0].x = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -L/2 et L/2
+    l_particules[0].y = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -L/2 et L/2
     l_particules[0].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
     l_particules[0].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
-    l_particules[0].ax = 0; // Nombre aléatoire entre -1 et 1
-    l_particules[0].ay = 0; 
+    l_particules[0].ax = 0;
+    l_particules[0].ay = 0;
+    l_particules[0].ax1 = 0;
+    l_particules[0].ay1 = 0;
     
+
     for (int i = 1; i < N; i++) {
 
-        int i_trop_proche = 0;
+        int i_trop_proche = 0; // Par défaut ne fait la boucle do while que une fois
 
         do {
 
-            l_particules[i].x = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -100 et 100
-            l_particules[i].y = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -100 et 100
+            i_trop_proche = 0;
+
+            l_particules[i].x = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -L/2 et L/2
+            l_particules[i].y = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -L/2 et L/2
             l_particules[i].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
             l_particules[i].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
-            l_particules[i].ax = 0; // Nombre aléatoire entre -1 et 1
-            l_particules[i].ay = 0; 
+            l_particules[i].ax = 0;
+            l_particules[i].ay = 0;
+            l_particules[i].ax1 = 0;
+            l_particules[i].ay1 = 0; 
 
             double xi = l_particules[i].x;
             double yi = l_particules[i].y;
@@ -157,17 +169,42 @@ int main(int argc, char *argv[]) {
                 double dy = yj - yi;
 
                 // Périodicité :
-                if {
-                    dx = ;
-                    dy = ;
-                }
+                if (dx > L/2)  dx-= L;
+                if (dx < -L/2) dx+= L;
+                if (dy > L/2)  dy-= L;
+                if (dy < -L/2) dy+= L;
+
 
                 double r_carre = dx*dx+dy*dy;
 
 
+                // Test si trop proche
+                if (r_carre < d_min_carre) {
+                    i_trop_proche = 1; // Les deux particules sont trop proches donc on régénère les positions de i
+                    break;
+                }
+
+                /*
+                double F_ij_x = 
+                ( 24 / r_carre )
+                * ( 2*pow(1/r_carre,6)
+                - pow(1/r_carre,3) ) * dx;
+                
+                double F_ij_y = 
+                ( 24 / r_carre )
+                * ( 2*pow(1/r_carre,6)
+                - pow(1/r_carre,3) ) * dy;
+
+
+                // Symétrie et masse normalisée
+                l_particules[i].ax += F_ij_x;
+                l_particules[i].ay += F_ij_y;
+                l_particules[j].ax -= F_ij_x;
+                l_particules[j].ay -= F_ij_y;
+                */
             }
 
-        } while i_trop_proche;
+        } while (i_trop_proche);
 
         
 
@@ -175,32 +212,15 @@ int main(int argc, char *argv[]) {
     }
 
 
+
     
     // Calcul de la simulation //
 
 
-    typedef struct {
-        double x;
-        double y;
-    } Force;
-    
-
-    Force **F_ij = malloc(N*sizeof(Force *)); // Liste de tous les F_ij
-    Force *F_i = malloc(N*N*sizeof(Force)); // Liste permettant de créer F_ij
-    for (int i=0; i<N; i++) {
-        F_ij[i] = F_i + i*N;
-    }
-    
-    // OPTIMISATION : On pourrait ne calculer que la moitié des forces,
-    // les symétriques étant des opposées
-
-
-    // Calcul des numéros de tour où on save dans le csv //
 
     int numero_ligne_actuelle_csv = 1;
     int prochain_tour_csv = (int) ( ((long long)numero_ligne_actuelle_csv * T) / nombre_lignes_csv );
     //Numéro du prochain tour où il faudra enregistrer les données dans le csv
-
 
 
     for (int t = 1; t < T; t++) { // à chaque tour
@@ -213,10 +233,8 @@ int main(int argc, char *argv[]) {
             double vyi = l_particules[i].vy;
             double axi = l_particules[i].ax;
             double ayi = l_particules[i].ay;
-            double axi1 = 0; // ax i+1
-            double ayi1 = 0; // ay i+1
 
-            for (int j = 0; j < N; j++) { // pour chaque couple i-j
+            for (int j = 0; j < N; j++) { // pour chaque couple i-j, symétrie NON prise en compte (sinon faire j < i)
 
                 if ( i == j ) {
                     continue;
@@ -226,43 +244,49 @@ int main(int argc, char *argv[]) {
                 double yj = l_particules[j].y;
                 double dx = xj - xi;
                 double dy = yj - yi;
+
+
+                // Périodicité :
+                if (dx > L/2)  dx-= L;
+                if (dx < -L/2) dx+= L;
+                if (dy > L/2)  dy-= L;
+                if (dy < -L/2) dy+= L;
+
+
                 double r_carre = dx*dx+dy*dy;
 
-                F_ij[i][j].x = 
+                double F_ij_x = 
                 ( 24 / r_carre )
                 * ( 2*pow(1/r_carre,6)
                 - pow(1/r_carre,3) ) * dx;
                 
-                F_ij[i][j].y = 
+                double F_ij_y = 
                 ( 24 / r_carre )
                 * ( 2*pow(1/r_carre,6)
                 - pow(1/r_carre,3) ) * dy;
 
-                axi1 = axi1 + F_ij[i][j].x;
-                ayi1 = ayi1 + F_ij[i][j].y;
 
+                l_particules[i].ax1 += F_ij_x; // Masse normalisée
+                l_particules[i].ay1 += F_ij_y;
+
+                /*
+                // Symétrie
+                l_particules[j].ax1 -= F_ij_x;
+                l_particules[j].ay1 -= F_ij_y;
+                */
             }
 
-            /* m normalisé
-            axi1 = axi1/m;
-            ayi1 = ayi1/m;
-            */
-
+            double axi1 = l_particules[i].ax1; // Permet d'éviter de lier les addresses de l_particules[i].ax et l_particules[i].ax1
+            double ayi1 = l_particules[i].ay1; // => Utile ?
             l_particules[i].ax = axi1;
             l_particules[i].ay = ayi1;
 
-            /* Euler :
-            l_particules[i].x = vxi + xi*dt;
-            l_particules[i].y = vyi + yi*dt;
-            l_particules[i].vx = axi + vxi*dt;
-            l_particules[i].vy = ayi + vyi*dt;
-            */
 
             // Algorithme de Verlet à un pas
-            l_particules[i].x = xi + dt*vxi + ( (dt*dt)/2 ) * axi;
-            l_particules[i].y = yi + dt*vyi + ( (dt*dt)/2 ) * ayi;
+            l_particules[i].x = fmod( (xi + dt*vxi + ( (dt*dt)/2 ) * axi), L ); // Périodicité :
+            l_particules[i].y = fmod( (yi + dt*vyi + ( (dt*dt)/2 ) * ayi), L ); // On replie les positions dans [0, L] avec fmod (modulo)
             l_particules[i].vx = vxi + (dt/2) * (axi + axi1);
-            l_particules[i].vy = vyi + (dt/2) * (ayi + ayi1);   
+            l_particules[i].vy = vyi + (dt/2) * (ayi + ayi1);
         }
 
         if (t == prochain_tour_csv) { // Si on doit écrire les données durant ce tour
@@ -282,9 +306,6 @@ int main(int argc, char *argv[]) {
     }
 
     fclose(fichier);
-    free(F_ij);
-    free(F_i);
     free(l_particules);
-    
     return 0;
 }
