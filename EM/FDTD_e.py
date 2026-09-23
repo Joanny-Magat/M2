@@ -65,7 +65,7 @@ t_exp_d2 = "Pas encore calculé"
 
 
 
-fig, ax = plt.subplots(figsize=(14, 6))
+fig, ax = plt.subplots(figsize=(16, 10))
 line, = ax.plot([], [], "black") #label="Paquet d'onde"
 espr, = ax.plot(x, esp_r, "grey")
 
@@ -105,12 +105,13 @@ ax.axvline(
     linewidth=2)
 
 #Positions des zones de mesures (zone gauche, centrale et droite)
-gg = int(N/4 - N/6)
-gd = int(N/4 + N/6)
-cg = int(N/4 - N/6)
-cd = int(N/4 + N/6)
-dg = int(3*N/4 - N/6)
-dd = int(3*N/4 + N/6)
+largeur_zone = N/9
+gg = int(N/6 - largeur_zone)
+gd = int(N/6 + largeur_zone)
+cg = int(2*N/4 - largeur_zone)
+cd = int(2*N/4 + largeur_zone)
+dg = int(5*N/6 - largeur_zone)
+dd = int(5*N/6 + largeur_zone)
 
 ax.axvspan(
     x[gg],
@@ -118,9 +119,32 @@ ax.axvspan(
     color="red",
     alpha=0.35,
     label=
-    f"Zone où est mesurée le max de l'amplitude\n"\
-    f"de l'onde incidente puis de celle réfléchie\n"\
+    "Zone où est mesurée le max de l'amplitude\n"\
+    "de l'onde incidente puis de celle réfléchie\n"\
+    "du premier dioptre\n"\
     f"(x de {x[gg]:.2e} à {x[gd]:.2e})")
+
+ax.axvspan(
+    x[cg],
+    x[cd],
+    color="green",
+    alpha=0.35,
+    label=
+    "Zone où est mesurée le max de l'amplitude\n"\
+    "de l'onde transmise du premier dioptre,\n"\
+    "de celle incidente du deuxième dioptre puis\n"\
+    "de celle réfléchie du deuxième dioptre\n"\
+    f"(x de {x[cg]:.2e} à {x[cd]:.2e})")
+
+ax.axvspan(
+    x[dg],
+    x[dd],
+    color="blue",
+    alpha=0.35,
+    label=
+    "Zone où est mesurée le max de l'amplitude\n"\
+    "de l'onde transmise du premier dioptre\n"\
+    f"(x de {x[dg]:.2e} à {x[dd]:.2e})")
 
 ax.set_title(
     f"Animation via FDTD d'un paquet d'onde\nen présence d'une lame de diélectrique d'indice de réfraction n={n_lame}",
@@ -139,11 +163,11 @@ ax.set_ylabel(
 
 legend = ax.legend(
     loc="upper left",
-    bbox_to_anchor=(1.01, 1.015))
+    bbox_to_anchor=(1.01, 1.01)) #[gauche, bas]
 legend.get_frame().set_edgecolor("grey")
 
 #Zone de texte
-ax_txt = fig.add_axes([0.652, 0.07, 0.3, 0.8]) #[gauche, bas, largeur, hauteur]
+ax_txt = fig.add_axes([0.65, -0.11, 0.3, 0.8]) #[gauche, bas, largeur, hauteur]
 ax_txt.axis("off")
 
 texte = ax_txt.text(
@@ -170,15 +194,23 @@ texte = ax_txt.text(
 
 def animate(n): 
     
+    """
     #Test pour connaitre n :
-    if n >= 290 :
-     return line, texte
+    if n >= 840 :
+        return line, texte
+    """
 
-    global Ei
-    global Er
-    global Et
-    global r_exp
-    global t_exp
+    global Ei_d1
+    global Er_d1
+    global Et_d1
+    global r_exp_d1
+    global t_exp_d1
+
+    global Ei_d2
+    global Er_d2
+    global Et_d2
+    global r_exp_d2
+    global t_exp_d2
 
     tnp = (n+1) * dt
     
@@ -192,33 +224,44 @@ def animate(n):
     un[:]=unp[:]
     
 
-    if n == 290 : #Onde Incidente d1 pour T_tot = 1000
-        Ei_d1 = max(np.abs(unp[gg:gd]))
+    if n == 290 : 
+        Ei_d1 = max(np.abs(unp[gg:gd])) #Onde Incidente d1 pour T_tot = 1000
     
-    if n == 677 : #Onde Réfléchie d1 pour T_tot = 1000
-        Er_d1 = max(np.abs(unp[gg:gd]))
+    if n == 515 : 
+        Er_d1 = max(np.abs(unp[gg:gd])) #Onde Réfléchie d1 pour T_tot = 1000
     
-    if n == 750 : #Onde Transmise d1 pour T_tot = 1000
-        Et_d1 = max(np.abs(unp[dg:dd]))
-
-    if n == 340 : #Onde Incidente d2 pour T_tot = 1000
-        Ei_d2 = max(np.abs(unp[gg:gd]))
+    if n == 560 : 
+        Et_d1 = max(np.abs(unp[cg:cd])) #Onde Transmise d1 pour T_tot = 1000
+        Ei_d2 = max(np.abs(unp[cg:cd])) #Onde Incidente d2 pour T_tot = 1000
     
-    if n == 677 : #Onde Réfléchie d2 pour T_tot = 1000
-        Er_d2 = max(np.abs(unp[gg:gd]))
-    
-    if n == 750 : #Onde Transmise d2 pour T_tot = 1000
-        Et_d2 = max(np.abs(unp[dg:dd]))
-     
-    if n > 750 :
-        r_exp = - (Er / Ei)
-        t_exp = Et / Ei
+    if n > 560 and n < 840 :
+        r_exp_d1 = - (Er_d1 / Ei_d1)
+        t_exp_d1 = Et_d1 / Ei_d1
         texte.set_text(
-            f"Coefficients de réflexion et de transmission du premier dioptre :\n\n"\
+            f"Coefficients de réflexion et de transmission\ndu premier dioptre :\n\n"\
             f"r_theo_d1 = {r_theo_d1:.3f}\nt_theo_d1 = {t_theo_d1:.3f}\n\n"\
             f"r_exp_d1 = {r_exp_d1:.3f}\nt_exp_d1 = {t_exp_d1:.3f}\n\n"\
             f"Ei_d1 = {Ei_d1:.3f}\nEr_d1 = {Er_d1:.3f}\nEt_d1 = {Et_d1:.3f}\n\n"\
-            f"Coefficients de réflexion et de transmission du deuxième dioptre :\n\n"\
+            f"Coefficients de réflexion et de transmission\ndu deuxième dioptre :\n\n"\
+            f"r_theo_d2 = {r_theo_d2:.3f}\nt_theo_d2 = {t_theo_d2:.3f}\n\n"\
+            f"r_exp_d2 = {r_exp_d2}\nt_exp_d2 = {t_exp_d2}\n\n"\
+            f"Ei_d2 = {Ei_d2}\nEr_d2 = {Er_d2}\nEt = {Et_d2}")
+
+    if n == 840 : 
+        Er_d2 = max(np.abs(unp[cg:cd])) #Onde Réfléchie d2 pour T_tot = 1000
+        Et_d2 = max(np.abs(unp[dg:dd])) #Onde Transmise d2 pour T_tot = 1000
+     
+    if n > 840 :
+        r_exp_d1 = - (Er_d1 / Ei_d1)
+        t_exp_d1 = Et_d1 / Ei_d1
+        r_exp_d2 = Er_d2 / Ei_d2
+        t_exp_d2 = Et_d2 / Ei_d2
+        texte.set_text(
+            f"Coefficients de réflexion et de transmission\ndu premier dioptre :\n\n"\
+            f"r_theo_d1 = {r_theo_d1:.3f}\nt_theo_d1 = {t_theo_d1:.3f}\n\n"\
+            f"r_exp_d1 = {r_exp_d1:.3f}\nt_exp_d1 = {t_exp_d1:.3f}\n\n"\
+            f"Ei_d1 = {Ei_d1:.3f}\nEr_d1 = {Er_d1:.3f}\nEt_d1 = {Et_d1:.3f}\n\n"\
+            f"Coefficients de réflexion et de transmission\ndu deuxième dioptre :\n\n"\
             f"r_theo_d2 = {r_theo_d2:.3f}\nt_theo_d2 = {t_theo_d2:.3f}\n\n"\
             f"r_exp_d2 = {r_exp_d2:.3f}\nt_exp_d2 = {t_exp_d2:.3f}\n\n"\
             f"Ei_d2 = {Ei_d2:.3f}\nEr_d2 = {Er_d2:.3f}\nEt = {Et_d2:.3f}")
@@ -226,6 +269,6 @@ def animate(n):
     return line, texte
  
 ani = animation.FuncAnimation(fig, animate, frames=T_tot,
-                              interval=1, blit=True, repeat=False)
+                              interval=1e-10, blit=True, repeat=False)
 
 plt.show()
