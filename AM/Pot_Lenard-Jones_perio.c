@@ -233,12 +233,12 @@ int main(int argc, char *argv[]) {
             double vyi = l_particules[i].vy;
             double axi = l_particules[i].ax;
             double ayi = l_particules[i].ay;
+            double axi1 = 0;
+            double ayi1 = 0;
 
             for (int j = 0; j < N; j++) { // pour chaque couple i-j, symétrie NON prise en compte (sinon faire j < i)
 
-                if ( i == j ) {
-                    continue;
-                }
+                if ( i == j ) {continue;}
  
                 double xj = l_particules[j].x;
                 double yj = l_particules[j].y;
@@ -247,27 +247,31 @@ int main(int argc, char *argv[]) {
 
 
                 // Périodicité :
-                if (dx > L/2)  dx-= L;
-                if (dx < -L/2) dx+= L;
-                if (dy > L/2)  dy-= L;
-                if (dy < -L/2) dy+= L;
+                if (dx > L/2) {dx-= L;}
+                if (dx < -L/2){dx+= L;}
+                if (dy > L/2) {dy-= L;}
+                if (dy < -L/2) {dy+= L;}
 
 
-                double r_carre = dx*dx+dy*dy;
+                double r_carre = dx*dx + dy*dy;
+                if (r_carre == 0) {continue;}
+
+                double un_sur_r_carre = 10 / r_carre; // sigma*sigma = 10
+                double un_sur_r_6 = un_sur_r_carre * un_sur_r_carre * un_sur_r_carre;
 
                 double F_ij_x = 
-                ( 24 / r_carre )
-                * ( 2*pow(1/r_carre,6)
-                - pow(1/r_carre,3) ) * dx;
+                ( 24 * un_sur_r_carre )
+                * ( 2 * un_sur_r_6 * un_sur_r_6
+                - un_sur_r_6 ) * dx;
                 
                 double F_ij_y = 
-                ( 24 / r_carre )
-                * ( 2*pow(1/r_carre,6)
-                - pow(1/r_carre,3) ) * dy;
+                ( 24 * un_sur_r_carre )
+                * ( 2 * un_sur_r_6 * un_sur_r_6
+                - un_sur_r_6 ) * dy;
 
 
-                l_particules[i].ax1 += F_ij_x; // Masse normalisée
-                l_particules[i].ay1 += F_ij_y;
+                axi1 += F_ij_x; // Masse normalisée
+                ayi1 += F_ij_y;
 
                 /*
                 // Symétrie
@@ -276,17 +280,19 @@ int main(int argc, char *argv[]) {
                 */
             }
 
-            double axi1 = l_particules[i].ax1; // Permet d'éviter de lier les addresses de l_particules[i].ax et l_particules[i].ax1
-            double ayi1 = l_particules[i].ay1; // => Utile ?
+            /*
+            l_particules[i].ax1 = axi1; // Permet d'éviter de lier les addresses de l_particules[i].ax et l_particules[i].ax1
+            l_particules[i].ay1 = ayi1; // => Utile ?
+            */
             l_particules[i].ax = axi1;
             l_particules[i].ay = ayi1;
 
 
             // Algorithme de Verlet à un pas
-            l_particules[i].x = fmod( (xi + dt*vxi + ( (dt*dt)/2 ) * axi), L ); // Périodicité :
-            l_particules[i].y = fmod( (yi + dt*vyi + ( (dt*dt)/2 ) * ayi), L ); // On replie les positions dans [0, L] avec fmod (modulo)
-            l_particules[i].vx = vxi + (dt/2) * (axi + axi1);
-            l_particules[i].vy = vyi + (dt/2) * (ayi + ayi1);
+            l_particules[i].x = fmod( (xi + dt*vxi + 0.5*dt*dt * axi), L ); // Périodicité :
+            l_particules[i].y = fmod( (yi + dt*vyi + 0.5*dt*dt * ayi), L ); // On replie les positions dans [0, L] avec fmod (modulo)
+            l_particules[i].vx = vxi + 0.5*dt * (axi + axi1);
+            l_particules[i].vy = vyi + 0.5*dt * (ayi + ayi1);
         }
 
         if (t == prochain_tour_csv) { // Si on doit écrire les données durant ce tour

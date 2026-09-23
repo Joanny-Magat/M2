@@ -36,7 +36,7 @@ un=np.linspace(0,0,N)
 unp=np.linspace(0,0,N)
 
 #Permittivité relative
-esp_r=np.ones(N) #Vide en dehors de la lame
+esp_r=np.ones(N)
 
 n1 = 1.000272 #Indice de réfraction de l'air (Atmosphère terrestre à 20 °C et 1 atm)
 n2 = 1.45
