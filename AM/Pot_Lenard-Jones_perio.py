@@ -9,7 +9,7 @@ Script permettant de visualiser la simulation Pot_Lenard-Jones_perio.c
 Affiche une animation de l'évolution de toutes les particules.
 
 Arguments (optionnels) :
-1er argu : Nombre d'intervalle de l'animation
+1er argu : Nombre d'intervalle de l'animation (100 par défaut)
 2eme argu : Chemin complet du csv simulé
 
 Fac :
@@ -46,7 +46,7 @@ if len(sys.argv) < 3: # 0 ou 1 argument
         nb_interval = int(sys.argv[1])
     
     else : # 0 argument
-        nb_interval = 10
+        nb_interval = 100
     
     dossier = "data"
 
