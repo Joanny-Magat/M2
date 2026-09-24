@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     strftime(buffer, sizeof(buffer), "%Hh_%Mmin_%Ss_%d_%m_%Y", date);
 
     char nom_csv[100];
-    snprintf(nom_csv, sizeof(nom_csv), "data/PotLJ_perio_date=%s_N=%d_T=%d_NbLignes=%d.csv", buffer, N, T, nombre_lignes_csv);
+    snprintf(nom_csv, sizeof(nom_csv), "data/PotLJ_perio_date=%s_N=%d_T=%d_NbLignes=%d_L=%d.csv", buffer, N, T, nombre_lignes_csv, L);
 
     FILE *fichier = fopen(nom_csv, "w");
 
@@ -101,10 +101,10 @@ int main(int argc, char *argv[]) {
     }
 
     fprintf(fichier, "//////////////////////////////////////////////////////\n");
-    fprintf(fichier, "// Potentiel de Lenard-Jones.\n");
+    fprintf(fichier, "// Potentiel de Lenard-Jones dans une boîte périodique %d x %d.\n", L, L);
     fprintf(fichier, "// Simulation de N = %d particules pendant T = %d tours.\n", N, T);
     fprintf(fichier, "// Ce CSV contient %d tours sur les %d.\n", nombre_lignes_csv, T);
-    fprintf(fichier, "// Les constantes sont normalisées ; espilon = 1, sigma = 1, m = 1.\n");
+    fprintf(fichier, "// Constantes : sigma^2 = 10, espilon = 1, m = 1.\n");
     fprintf(fichier, "// Description des colonnes : particule_i,x,y,vx,vy,ax,ay\n");
     fprintf(fichier, "//////////////////////////////////////////////////////\n");
 
@@ -139,6 +139,7 @@ int main(int argc, char *argv[]) {
     l_particules[0].ay = 0;
     l_particules[0].ax1 = 0;
     l_particules[0].ay1 = 0;
+    fprintf(fichier, "0,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", l_particules[0].x, l_particules[0].y, l_particules[0].vx, l_particules[0].vy, l_particules[0].ax, l_particules[0].ay);
     
 
     for (int i = 1; i < N; i++) {
