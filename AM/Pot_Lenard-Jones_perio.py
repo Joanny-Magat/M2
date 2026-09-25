@@ -128,9 +128,6 @@ with open(f"{nom_csv}", "r") as fichier:
 x = np.array(x)
 y = np.array(y)
 
-print(x)
-print(y)
-
 # --- Tracer du plot ---
 
 fig, ax = plt.subplots(figsize=(8, 8))
@@ -168,17 +165,25 @@ texte_tour = ax.text(
 )
 
 # objet "points" qu'on va déplacer à chaque image
-points, = ax.plot([], [], "o", markersize=10)
+points_bleus, = ax.plot([], [], "o", color="blue", markersize=10)
+point_rouge, = ax.plot([], [], "o", color="red", markersize=10)
 
 def init():
-    points.set_data([], [])
+    points_bleus.set_data([], [])
+    point_rouge.set_data([], [])
     texte_tour.set_text("")
-    return points,texte_tour
+    return points_bleus, point_rouge, texte_tour
 
 def update(t):
-    points.set_data(x[t], y[t])
+    # Toutes les particules sauf la première
+    points_bleus.set_data(x[t][1:], y[t][1:])
+
+    # Première particule en rouge
+    point_rouge.set_data([x[t][0]], [y[t][0]])
+
     texte_tour.set_text(f"tour {num_tour[t]}")
-    return points, texte_tour
+    
+    return points_bleus, point_rouge, texte_tour
 
 ani = FuncAnimation(fig, update, frames=len(num_tour),
                     init_func=init, interval=nb_interval, blit=True, repeat=True)

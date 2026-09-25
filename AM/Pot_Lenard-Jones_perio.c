@@ -62,8 +62,8 @@ int main(int argc, char *argv[]) {
     int T = atoi(argv[2]);
     int nombre_lignes_csv = atoi(argv[3]);
 
-    double dt = 0.0001;
-    int L = (int) (2*sqrt(N)); // Longueur de la boite
+    double dt = 0.001;
+    int L = (int) (10*sqrt(N)); // Longueur de la boite
     double d_min_carre = 1; // Carré de la distance minimum initiale entre deux particules
 
     /* Constantes normalisées => on ne les def meme pas vu que tout vaut 1
@@ -131,10 +131,10 @@ int main(int argc, char *argv[]) {
 
 
     // Création de la particule 0 :
-    l_particules[0].x = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -L/2 et L/2
-    l_particules[0].y = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -L/2 et L/2
-    l_particules[0].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
-    l_particules[0].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
+    l_particules[0].x = (double)(-L + rand() % (2*L)); // Nombre aléatoire entre -L et L
+    l_particules[0].y = (double)(-L + rand() % (2*L)); // Nombre aléatoire entre -L et L
+    l_particules[0].vx = (double)(-10 + rand() % 21); // Nombre aléatoire entre -10 et 10
+    l_particules[0].vy = (double)(-10 + rand() % 21); // Nombre aléatoire entre -10 et 10
     l_particules[0].ax = 0;
     l_particules[0].ay = 0;
     l_particules[0].ax1 = 0;
@@ -150,30 +150,26 @@ int main(int argc, char *argv[]) {
 
             i_trop_proche = 0;
 
-            l_particules[i].x = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -L/2 et L/2
-            l_particules[i].y = (double)(-L/2 + rand() % L); // Nombre aléatoire entre -L/2 et L/2
-            l_particules[i].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
-            l_particules[i].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -1 et 1
+            l_particules[i].x = (double)(-L + rand() % (2*L)); // Nombre aléatoire entre -L et L
+            l_particules[i].y = (double)(-L + rand() % (2*L)); // Nombre aléatoire entre -L et L
+            l_particules[i].vx = (double)(-10 + rand() % 21); // Nombre aléatoire entre -10 et 10
+            l_particules[i].vy = (double)(-10 + rand() % 21); // Nombre aléatoire entre -10 et 10
             l_particules[i].ax = 0;
             l_particules[i].ay = 0;
             l_particules[i].ax1 = 0;
             l_particules[i].ay1 = 0; 
 
-            double xi = l_particules[i].x;
-            double yi = l_particules[i].y;
 
             for (int j = 0; j < i; j++) {
                 
-                double xj = l_particules[j].x;
-                double yj = l_particules[j].y;
-                double dx = xj - xi;
-                double dy = yj - yi;
+                double dx = l_particules[i].x - l_particules[j].x; // et pas j - i
+                double dy = l_particules[i].y - l_particules[j].y;
 
                 // Périodicité :
-                if (dx > L/2)  dx-= L/2;
-                if (dx < -L/2) dx+= L/2;
-                if (dy > L/2)  dy-= L/2;
-                if (dy < -L/2) dy+= L/2;
+                if (dx > L/2) {dx-= L;}
+                if (dx < -L/2){dx+= L;}
+                if (dy > L/2) {dy-= L;}
+                if (dy < -L/2) {dy+= L;}
 
 
                 double r_carre = dx*dx+dy*dy;
@@ -226,6 +222,16 @@ int main(int argc, char *argv[]) {
 
     for (int t = 1; t < T; t++) { // à chaque tour
     
+        for (int i = 0; i < N; i++) {
+
+            // Algorithme de Verlet à un pas
+            l_particules[i].ax = l_particules[i].ax1;
+            l_particules[i].ay = l_particules[i].ay1; 
+            l_particules[i].x = fmod( (l_particules[i].x + dt*l_particules[i].vx + 0.5 * dt*dt * l_particules[i].ax), L ); // Périodicité :
+            l_particules[i].y = fmod( (l_particules[i].y + dt*l_particules[i].vy + 0.5 * dt*dt * l_particules[i].ay), L ); // On replie les positions dans [0, L] avec fmod (modulo)
+            
+        }
+
         for (int i = 0; i < N; i++) { // pour chaque particule i 
             
             double axi1 = 0;
@@ -235,20 +241,20 @@ int main(int argc, char *argv[]) {
 
                 if ( i == j ) {continue;}
  
-                double dx = l_particules[j].x - l_particules[i].x;
-                double dy = l_particules[j].y - l_particules[i].y;
+                double dx = l_particules[i].x - l_particules[j].x; // et pas j - i !
+                double dy = l_particules[i].y - l_particules[j].y;
 
                 // Périodicité :
-                if (dx > L/2) {dx-= L/2;}
-                if (dx < -L/2){dx+= L/2;}
-                if (dy > L/2) {dy-= L/2;}
-                if (dy < -L/2) {dy+= L/2;}
+                if (dx > L/2) {dx-= L;}
+                if (dx < -L/2){dx+= L;}
+                if (dy > L/2) {dy-= L;}
+                if (dy < -L/2) {dy+= L;}
 
 
                 double r_carre = dx*dx + dy*dy;
                 if (r_carre == 0) {continue;}
 
-                double un_sur_r_carre = 10 / r_carre; // sigma*sigma = 10
+                double un_sur_r_carre = 10 / r_carre; // sigma*sigma = 1
                 double un_sur_r_6 = un_sur_r_carre * un_sur_r_carre * un_sur_r_carre;
 
                 double F_ij_x = 
@@ -262,8 +268,8 @@ int main(int argc, char *argv[]) {
                 - un_sur_r_6 ) * dy;
 
 
-                axi1 += F_ij_x; // Masse normalisée
-                ayi1 += F_ij_y;
+                l_particules[i].ax1 += F_ij_x; // Masse normalisée
+                l_particules[i].ay1 += F_ij_y;
 
                 /*
                 // Symétrie
@@ -272,21 +278,14 @@ int main(int argc, char *argv[]) {
                 */
             }
 
-            l_particules[i].ax1 = axi1;
-            l_particules[i].ay1 = ayi1;
-
         }
 
         for (int i = 0; i < N; i++) {
 
             // Algorithme de Verlet à un pas
-            l_particules[i].x = fmod( (l_particules[i].x + dt*l_particules[i].vx + 0.5 * dt*dt * l_particules[i].ax), L ); // Périodicité :
-            l_particules[i].y = fmod( (l_particules[i].y + dt*l_particules[i].vy + 0.5 * dt*dt * l_particules[i].ay), L ); // On replie les positions dans [0, L] avec fmod (modulo)
             l_particules[i].vx = l_particules[i].vx + 0.5 * dt * (l_particules[i].ax + l_particules[i].ax1);
             l_particules[i].vy = l_particules[i].vy + 0.5 * dt * (l_particules[i].ay + l_particules[i].ay1);
-        
-            l_particules[i].ax = l_particules[i].ax1;
-            l_particules[i].ay = l_particules[i].ay1; 
+    
         }
 
         if (t == prochain_tour_csv) { // Si on doit écrire les données durant ce tour
