@@ -128,6 +128,8 @@ with open(f"{nom_csv}", "r") as fichier:
 x = np.array(x)
 y = np.array(y)
 
+print(x)
+print(y)
 
 # --- Tracer du plot ---
 
@@ -151,8 +153,8 @@ ax.set_ylabel("y")
 
 
 # --- limites des axes ---
-ax.set_xlim(-L/2, L/2)
-ax.set_ylim(-L/2, L/2)
+ax.set_xlim(-L, L)
+ax.set_ylim(-L, L)
 
 
 

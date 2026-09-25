@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     int T = atoi(argv[2]);
     int nombre_lignes_csv = atoi(argv[3]);
 
-    double dt = 0.01;
+    double dt = 0.0001;
     int L = (int) (2*sqrt(N)); // Longueur de la boite
     double d_min_carre = 1; // Carré de la distance minimum initiale entre deux particules
 
@@ -170,10 +170,10 @@ int main(int argc, char *argv[]) {
                 double dy = yj - yi;
 
                 // Périodicité :
-                if (dx > L/2)  dx-= L;
-                if (dx < -L/2) dx+= L;
-                if (dy > L/2)  dy-= L;
-                if (dy < -L/2) dy+= L;
+                if (dx > L/2)  dx-= L/2;
+                if (dx < -L/2) dx+= L/2;
+                if (dy > L/2)  dy-= L/2;
+                if (dy < -L/2) dy+= L/2;
 
 
                 double r_carre = dx*dx+dy*dy;
@@ -228,12 +228,6 @@ int main(int argc, char *argv[]) {
     
         for (int i = 0; i < N; i++) { // pour chaque particule i 
             
-            double xi = l_particules[i].x;
-            double yi = l_particules[i].y;
-            double vxi = l_particules[i].vx;
-            double vyi = l_particules[i].vy;
-            double axi = l_particules[i].ax;
-            double ayi = l_particules[i].ay;
             double axi1 = 0;
             double ayi1 = 0;
 
@@ -241,17 +235,14 @@ int main(int argc, char *argv[]) {
 
                 if ( i == j ) {continue;}
  
-                double xj = l_particules[j].x;
-                double yj = l_particules[j].y;
-                double dx = xj - xi;
-                double dy = yj - yi;
-
+                double dx = l_particules[j].x - l_particules[i].x;
+                double dy = l_particules[j].y - l_particules[i].y;
 
                 // Périodicité :
-                if (dx > L/2) {dx-= L;}
-                if (dx < -L/2){dx+= L;}
-                if (dy > L/2) {dy-= L;}
-                if (dy < -L/2) {dy+= L;}
+                if (dx > L/2) {dx-= L/2;}
+                if (dx < -L/2){dx+= L/2;}
+                if (dy > L/2) {dy-= L/2;}
+                if (dy < -L/2) {dy+= L/2;}
 
 
                 double r_carre = dx*dx + dy*dy;
@@ -281,19 +272,21 @@ int main(int argc, char *argv[]) {
                 */
             }
 
-            /*
-            l_particules[i].ax1 = axi1; // Permet d'éviter de lier les addresses de l_particules[i].ax et l_particules[i].ax1
-            l_particules[i].ay1 = ayi1; // => Utile ?
-            */
-            l_particules[i].ax = axi1;
-            l_particules[i].ay = ayi1;
+            l_particules[i].ax1 = axi1;
+            l_particules[i].ay1 = ayi1;
 
+        }
+
+        for (int i = 0; i < N; i++) {
 
             // Algorithme de Verlet à un pas
-            l_particules[i].x = fmod( (xi + dt*vxi + 0.5*dt*dt * axi), L ); // Périodicité :
-            l_particules[i].y = fmod( (yi + dt*vyi + 0.5*dt*dt * ayi), L ); // On replie les positions dans [0, L] avec fmod (modulo)
-            l_particules[i].vx = vxi + 0.5*dt * (axi + axi1);
-            l_particules[i].vy = vyi + 0.5*dt * (ayi + ayi1);
+            l_particules[i].x = fmod( (l_particules[i].x + dt*l_particules[i].vx + 0.5 * dt*dt * l_particules[i].ax), L ); // Périodicité :
+            l_particules[i].y = fmod( (l_particules[i].y + dt*l_particules[i].vy + 0.5 * dt*dt * l_particules[i].ay), L ); // On replie les positions dans [0, L] avec fmod (modulo)
+            l_particules[i].vx = l_particules[i].vx + 0.5 * dt * (l_particules[i].ax + l_particules[i].ax1);
+            l_particules[i].vy = l_particules[i].vy + 0.5 * dt * (l_particules[i].ay + l_particules[i].ay1);
+        
+            l_particules[i].ax = l_particules[i].ax1;
+            l_particules[i].ay = l_particules[i].ay1; 
         }
 
         if (t == prochain_tour_csv) { // Si on doit écrire les données durant ce tour
@@ -302,6 +295,7 @@ int main(int argc, char *argv[]) {
 
             for(int i = 0; i<N; i++){
                 fprintf(fichier, "%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy, l_particules[i].ax, l_particules[i].ay);
+                //printf("%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy, l_particules[i].ax, l_particules[i].ay);
             }
 
             numero_ligne_actuelle_csv++;
