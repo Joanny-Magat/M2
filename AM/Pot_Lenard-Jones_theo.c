@@ -19,8 +19,8 @@ Compilation :
 gcc -O0 Pot_Lenard-Jones.c -o Pot_Lenard-Jones.out -lm
 (-lm est important pour faire fonctionner pow)
 
-Windows : .\Pot_Lenard-Jones_perio.out 100 10000 1000
-Linux : ./Pot_Lenard-Jones_perio.out 100 10000 1000
+Windows : .\Pot_Lenard-Jones_perio.out 100 1000 1000
+Linux : ./Pot_Lenard-Jones_perio.out 100 1000 1000
 
 */
 
