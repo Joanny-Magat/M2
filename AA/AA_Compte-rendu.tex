@@ -1,5 +1,8 @@
 \documentclass{article}
 \usepackage{graphicx} % Required for inserting images
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage{tabularx}
 
 \title{Compte-rendu des TPs de\\Simulation d'Atomistique Avancé}
 \author{Joanny Magat}
@@ -11,4 +14,75 @@
 
 \section{Introduction}
 
+\section{TP4 (02/10/2026)}
+
+\subsection{Objecif du TP}
+
+\subsection{Vectorisation : boucles}
+
+\vspace{0.5cm}
+
+\begin{tabularx}{\textwidth}{c c X X}
+    \toprule
+    n° de Boucle & Vectorisée ? & Commentaire & Point bloquant\\
+    \midrule
+    0 & Oui & optimized: loop vectorized using 16 byte vectors & x\\
+    1 & Oui & optimized: loop vectorized using 16 byte vectors & x\\
+    2 & Oui & optimized: loop vectorized using 8 byte vectors & x\\
+    3 & ??? & rien n'est dit concernant cette boucle & x\\
+    4 & Oui & optimized: loop vectorized using 8 byte vectors & x\\
+    5 & Oui & optimized: loop vectorized using 16 byte vectors & x\\
+    6 & Oui & optimized: loop vectorized using 16 byte vectors & x\\
+    7 & Non & missed: couldn't vectorize loop & \makecell[l]{On n'a pas forcément $d > L$ \\ car l'indice est dynamique} \\
+    \bottomrule
+\end{tabularx}
+
+\vspace{0.5cm}
+
+gcc -Q --help=target \\
+msse2 [enabled] \\
+donc 128 bytes \\
+
+
+\subsection{Vectorisation : re-indexation}
+
+Concernant la boucle calculant la somme on a :\\
+"vectorisation-reindexation.c:25:18: missed: couldn't vectorize loop"\\
+
+\vspace{0.5cm}
+
+Il faut donc faire une liste A_inv contenant les éléments de A trié dans l'ordre décroissant.\\
+De plus, il faut transformer S en liste dont chaque élément sera à sommer.\\
+La boucle deviendra alors verctorisable car tous ses éléments seront fonction de i.\\
+
+Le code devient : \\
+
+#include <stdio.h>
+#include <assert.h>
+
+int main() {	  
+
+  const int dim=100000;
+  double A[dim];
+  double A_inv[dim];
+
+  // initialise array
+  for (int i=0; i<dim; i++) {
+    A[i] = 1./(i+1);
+    
+  }
+  for (int i=0; i<dim; i++) {
+    A_inv[dim-i-1] = A[i];
+  }
+
+  // calculate required sum
+  double S[dim];
+  for (int i=0; i<dim; i++)
+    S[i] = (i+1)*A[i] +1./(i+1)*A_inv[i]; 
+  
+  double sum = 0;
+  for (int i=0; i<dim; i++)
+    sum += S[i];
+  printf("S: %lf",sum); // dummy print
+}
 \end{document}
