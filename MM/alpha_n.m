@@ -14,6 +14,6 @@ function res = alpha_n(n, eps_r, mu_r, k0, R, phi)
   Ji = besselj(n,k0.*R.*nu);
   dJi = dbesselj(n,k0.*R.*nu);
 
-  res = X .* ( -1 ./ ( 1 + 1i .* ( (dY0 .* Ji - Zr .* Y0 .* dJi) ./ (dJ0 .* Ji - Zr .* J0 .* dJi) ) ) );
+  res = -X ./ ( 1 + 1i .* ( (dY0 .* Ji - Zr .* Y0 .* dJi) ./ (dJ0 .* Ji - Zr .* J0 .* dJi) ) );
 
 endfunction
