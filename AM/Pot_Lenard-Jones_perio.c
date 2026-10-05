@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
     double dt = 0.001;
     int L = (int) (5*sqrt(N)); // Longueur de la boite
-    double d_min_carre = 1; // Carré de la distance minimum initiale entre deux particules
+    double d_min_carre = 2; // Carré de la distance minimum initiale entre deux particules
 
     /* Constantes normalisées => on ne les def meme pas vu que tout vaut 1
     double epsilon = 1.0;
@@ -139,7 +139,6 @@ int main(int argc, char *argv[]) {
     l_particules[0].ay = 0;
     l_particules[0].ax1 = 0;
     l_particules[0].ay1 = 0;
-    fprintf(fichier, "0,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", l_particules[0].x, l_particules[0].y, l_particules[0].vx, l_particules[0].vy, l_particules[0].ax, l_particules[0].ay);
     
 
     for (int i = 1; i < N; i++) {
@@ -152,8 +151,10 @@ int main(int argc, char *argv[]) {
 
             l_particules[i].x = (double)(-L + rand() % (2*L)); // Nombre aléatoire entre -L et L
             l_particules[i].y = (double)(-L + rand() % (2*L)); // Nombre aléatoire entre -L et L
-            l_particules[i].vx = (double)(-10 + rand() % 21); // Nombre aléatoire entre -10 et 10
-            l_particules[i].vy = (double)(-10 + rand() % 21); // Nombre aléatoire entre -10 et 10
+            // l_particules[i].vx = (double)(-1 + rand() % 3); // Nombre aléatoire entre -10 et 10
+            // l_particules[i].vy = (double)(-1 + rand() % 3); // Nombre aléatoire entre -10 et 10
+            l_particules[i].vx = 0; // Nombre aléatoire entre -10 et 10
+            l_particules[i].vy = 0;
             l_particules[i].ax = 0;
             l_particules[i].ay = 0;
             l_particules[i].ax1 = 0;
@@ -174,69 +175,68 @@ int main(int argc, char *argv[]) {
 
                 double r_carre = dx*dx+dy*dy;
 
-
                 // Test si trop proche
                 if (r_carre < d_min_carre) {
                     i_trop_proche = 1; // Les deux particules sont trop proches donc on régénère les positions de i
                     break;
                 }
-
                
             }
 
         } while (i_trop_proche);
 
-        
-
-        fprintf(fichier, "%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy, l_particules[i].ax, l_particules[i].ay);
     }
 
-
-
-    
-    // Calcul de la simulation //
-
-    for (int i = 0; i < N;i++){
+    //Tour 0
+    for (int i = 0; i < N; i++) {
         
-        double axi1 = 0;
-        double ayi1 = 0;
-
-        for (int j = 0; j < N; j++) { // 
+        for (int j = 0; j < N; j++) {
 
             if ( i == j ) {continue;}
-            
-            double dx = l_particules[i].x - l_particules[j].x;
+    
+            double dx = l_particules[i].x - l_particules[j].x; // et pas j - i !
             double dy = l_particules[i].y - l_particules[j].y;
-            
+
             // Périodicité :
             if (dx > L) {dx-= 2*L;}
             if (dx < -L){dx+= 2*L;}
             if (dy > L) {dy-= 2*L;}
             if (dy < -L) {dy+= 2*L;}
-            
+
             double r_carre = dx*dx + dy*dy;
             if (r_carre == 0) {continue;}
+
             double un_sur_r_carre = 1 / r_carre; // sigma*sigma = 10
             double un_sur_r_6 = un_sur_r_carre * un_sur_r_carre * un_sur_r_carre;
-            
+                            
             double F_ij_x = 
             ( 24 * un_sur_r_carre )
             * ( 2 * un_sur_r_6 * un_sur_r_6
             - un_sur_r_6 ) * dx;
-            
+                            
             double F_ij_y = 
             ( 24 * un_sur_r_carre )
             * ( 2 * un_sur_r_6 * un_sur_r_6
             - un_sur_r_6 ) * dy;
-            
-            axi1 += F_ij_x; // Masse normalisée
-            ayi1 += F_ij_y;
-            
+                    
+            l_particules[i].ax1 += F_ij_x; // Masse normalisée
+            l_particules[i].ay1 += F_ij_y;
+
         }
 
-        l_particules[i].ax1 = axi1;
-        l_particules[i].ay1 = ayi1;
+        fprintf(fichier, "%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy, l_particules[i].ax1, l_particules[i].ay1);
     }
+
+    for (int i = 0; i < N; i++) {
+
+        l_particules[i].ax = l_particules[i].ax1; // Le faire à la fin du tour !
+        l_particules[i].ay = l_particules[i].ay1; // C'est le fait de le mettre au début qui faisait bugger la simu !
+             
+    }
+    
+
+
+    // Calcul de la simulation //
 
 
     int numero_ligne_actuelle_csv = 1;
@@ -249,9 +249,6 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < N; i++) {
 
             // Algorithme de Verlet à un pas
-            l_particules[i].ax = l_particules[i].ax1;
-            l_particules[i].ay = l_particules[i].ay1; 
-            
             l_particules[i].x += dt*l_particules[i].vx + 0.5 * dt*dt * l_particules[i].ax;
             l_particules[i].y += dt*l_particules[i].vy + 0.5 * dt*dt * l_particules[i].ay;
             if (l_particules[i].x > L)  l_particules[i].x -= 2*L;
@@ -314,6 +311,8 @@ int main(int argc, char *argv[]) {
             l_particules[i].vx += 0.5 * dt * (l_particules[i].ax + l_particules[i].ax1);
             l_particules[i].vy += 0.5 * dt * (l_particules[i].ay + l_particules[i].ay1);
     
+            l_particules[i].ax = l_particules[i].ax1;
+            l_particules[i].ay = l_particules[i].ay1; 
         }
 
         if (t == prochain_tour_csv) { // Si on doit écrire les données durant ce tour
@@ -321,7 +320,7 @@ int main(int argc, char *argv[]) {
             fprintf(fichier, "###### Tour %d ######\n", t);
 
             for(int i = 0; i<N; i++){
-                fprintf(fichier, "%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy, l_particules[i].ax, l_particules[i].ay);
+                fprintf(fichier, "%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy, l_particules[i].ax1, l_particules[i].ay1);
                 //printf("%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", i,l_particules[i].x, l_particules[i].y, l_particules[i].vx, l_particules[i].vy, l_particules[i].ax, l_particules[i].ay);
             }
 
